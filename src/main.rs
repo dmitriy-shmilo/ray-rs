@@ -5,6 +5,7 @@ use std::io::{ BufWriter, Write };
 use std::ops::{ Mul, Div, Add, Sub, Index };
 use std::fmt;
 
+#[derive(Debug, Copy, Clone)]
 struct Vec3 {
     data: [f32; 3]
 }
@@ -155,6 +156,38 @@ impl fmt::Display for Vec3 {
     }
 }
 
+struct Ray {
+    a: Vec3,
+    b: Vec3
+}
+
+impl Ray {
+
+    fn new(a: Vec3, b: Vec3) -> Self {
+        Ray {
+            a,
+            b
+        }
+    }
+    fn origin(&self) -> Vec3 {
+        self.a
+    }
+
+    fn direction(&self) -> Vec3 {
+        self.b
+    }
+
+    fn point_at(&self, t: f32) -> Vec3 {
+        self.a + self.b * t
+    }
+}
+
+fn color(r: &Ray) -> Vec3 {
+    let dir = r.direction().into_unit();
+    let t = 0.5 * (dir.y() + 1.0);
+    Vec3::new_all(1.0) * (1.0 - t) + Vec3::new(0.5, 0.7, 1.0) * t
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let width = 200;
     let height = 100;
@@ -162,10 +195,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let file = File::create("output.ppm")?;
     let mut out = BufWriter::new(file);
 
+    let lower_left = Vec3::new(-2.0, -1.0, -1.0);
+    let horizontal = Vec3::new(4.0, 0.0, 0.0);
+    let vertical = Vec3::new(0.0, 2.0, 0.0);
+    let origin = Vec3::new_zero();
+
     write!(&mut out, "P3\n{} {}\n255\n", width, height)?;
     for j in (0..height).rev() {
         for i in 0..width {
-            let col = Vec3::new(i as f32 / width as f32, j as f32 / height as f32, 0.2);
+            let u = i as f32 / width as f32;
+            let v = j as f32 / height as f32;
+            let ray = Ray::new(origin, lower_left + horizontal * u + vertical * v);
+            let col = color(&ray);
             write!(&mut out, "{} {} {}\n",
                 (col.x() * 255.9) as u8,
                 (col.y() * 255.9) as u8,
