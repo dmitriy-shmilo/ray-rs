@@ -4,14 +4,16 @@ mod vec3;
 mod ray;
 mod hit;
 mod sphere;
+mod camera;
 
 use vec3::Vec3;
 use ray::Ray;
 use hit::{ Hit, HitList, HitRecord };
 use sphere::Sphere;
+use camera::Camera;
 use std::fs::File;
 use std::io::{ BufWriter, Write };
-
+use rand::Rng;
 
 
 fn color(ray: &Ray, world:&HitList) -> Vec3 {
@@ -35,22 +37,29 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let width = 200;
     let height = 100;
+    let aa_rays = 100;
+    let camera = Camera::new();
+
+    let mut rng = rand::thread_rng();
 
     let file = File::create("output.ppm")?;
     let mut out = BufWriter::new(file);
 
-    let lower_left = Vec3::new(-2.0, -1.0, -1.0);
-    let horizontal = Vec3::new(4.0, 0.0, 0.0);
-    let vertical = Vec3::new(0.0, 2.0, 0.0);
-    let origin = Vec3::new_zero();
-
     write!(&mut out, "P3\n{} {}\n255\n", width, height)?;
     for j in (0..height).rev() {
         for i in 0..width {
-            let u = i as f32 / width as f32;
-            let v = j as f32 / height as f32;
-            let ray = Ray::new(origin, lower_left + horizontal * u + vertical * v);
-            let col = color(&ray, &world);
+            let mut col = Vec3::new_zero();
+            for _ in 0..aa_rays {
+                let u = (i as f32 + rng.gen::<f32>()) / width as f32;
+                let v = (j as f32 + rng.gen::<f32>()) / height as f32;
+                let ray = camera.get_ray(u, v);
+
+                // TODO: implement AddAssign for Vec3
+                col = col + color(&ray, &world);
+            }
+            // TODO: implement DivAssign for Vec3
+            col = col / aa_rays as f32;
+            
             write!(&mut out, "{} {} {}\n",
                 (col.x() * 255.9) as u8,
                 (col.y() * 255.9) as u8,
