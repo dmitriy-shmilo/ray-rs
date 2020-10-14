@@ -2,6 +2,8 @@
 
 use std::fs::File;
 use std::io::{ BufWriter, Write };
+use std::ops::{ Mul, Div, Add, Sub, Index };
+use std::fmt;
 
 struct Vec3 {
     data: [f32; 3]
@@ -36,6 +38,120 @@ impl Vec3 {
 
     fn z(&self) -> f32 {
         self.data[2]
+    }
+
+    fn r(&self) -> f32 {
+        self.data[0]
+    }
+
+    fn g(&self) -> f32 {
+        self.data[1]
+    }
+
+    fn b(&self) -> f32 {
+        self[2]
+    }
+
+    fn len(&self) -> f32 {
+        (self.data[0] * self.data[0]
+            + self.data[1] * self.data[1]
+            + self.data[2] * self.data[2])
+        .sqrt()
+    }
+
+    fn len_sq(&self) -> f32 {
+        self[0] * self[0]
+            + self[1] * self[1]
+            + self[2] * self[2]
+    }
+
+    fn into_unit(&self) -> Vec3 {
+        let len = self.len();
+        Vec3::new(self[0] / len, self[1] / len, self[2] / len)
+    }
+
+    fn dot(&self, other:&Vec3) -> f32 {
+        self[0] * other[0] + self[1] * other[1] + self[2] * other[2]
+    }
+
+    fn cross(&self, other:&Vec3) -> Vec3 {
+        Vec3::new(self[1] * other[2] - self[2] * other[1],
+            self[2] * other[0] - self[0] * other[2],
+            self[0] * other[1] - self[1] * other[0])
+    }
+}
+
+impl Add<Vec3> for Vec3 {
+    type Output = Vec3;
+
+    fn add(self, other: Vec3) -> Vec3 {
+        Vec3::new(self[0] + other[0],
+            self[1] + other[1],
+            self[2] + other[2])
+    }
+}
+
+impl Sub<Vec3> for Vec3 {
+    type Output = Vec3;
+
+    fn sub(self, other: Vec3) -> Vec3 {
+        Vec3::new(self[0] - other[0],
+            self[1] - other[1],
+            self[2] - other[2])
+    }
+}
+
+impl Mul<f32> for Vec3 {
+    type Output = Vec3;
+
+    fn mul(self, scalar: f32) -> Vec3 {
+        Vec3::new(self[0] * scalar, self[1] * scalar, self[2] * scalar)
+    }
+}
+
+impl Mul<Vec3> for Vec3 {
+    type Output = Vec3;
+
+    fn mul(self, other: Vec3) -> Vec3 {
+        Vec3::new(self[0] * other[0], self[1] * other[1], self[2] * other[2])
+    }
+}
+
+impl Div<f32> for Vec3 {
+    type Output = Vec3;
+
+    fn div(self, scalar: f32) -> Vec3 {
+        Vec3::new(self[0] / scalar, self[1] / scalar, self[2] / scalar)
+    }
+}
+
+impl Div<Vec3> for Vec3 {
+    type Output = Vec3;
+
+    fn div(self, other: Vec3) -> Vec3 {
+        Vec3::new(self[0] / other[0], self[1] / other[1], self[2] / other[2])
+    }
+}
+
+impl Index<usize> for Vec3 {
+    type Output = f32;
+
+    fn index(&self, i: usize) -> &f32{
+        &self.data[i]
+    }
+}
+
+impl Index<i32> for Vec3 {
+    type Output = f32;
+
+    fn index(&self, i: i32) -> &f32{
+        &self.data[i as usize]
+    }
+}
+
+impl fmt::Display for Vec3 {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} {} {}", self.data[0], self.data[1], self.data[2])
     }
 }
 
