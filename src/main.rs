@@ -2,30 +2,24 @@
 
 mod vec3;
 mod ray;
+mod hit;
+mod sphere;
 
 use vec3::Vec3;
 use ray::Ray;
+use hit::{ Hit, HitList, HitRecord };
+use sphere::Sphere;
 use std::fs::File;
 use std::io::{ BufWriter, Write };
 
-fn hit_sphere(center: Vec3, radius: f32, ray:&Ray) -> f32 {
-    let diff = ray.origin() - center;
-    let a = ray.direction().dot(&ray.direction());
-    let b = diff.dot(&ray.direction()) * 2.0;
-    let c = diff.dot(&diff) - radius * radius;
-    let d = b * b - 4.0 * a * c;
-    if d < 0.0 {
-        -1.0
-    } else {
-        (-b - d.sqrt()) / 2.0 / a
-    }
-}
 
-fn color(ray: &Ray) -> Vec3 {
-    let t = hit_sphere(Vec3::new(0.0,0.0,-1.0), 0.5, ray);
-    if t > 0.0 {
-        let n = (ray.point_at(t) - Vec3::new(0.0, 0.0, -1.0)).into_unit();
-        return Vec3::new(n.x() + 1.0, n.y() + 1.0, n.z() + 1.0) * 0.5;
+
+fn color(ray: &Ray, world:&HitList) -> Vec3 {
+    let mut rec = HitRecord::new();
+    if world.hit(&ray, 0.0, f32::MAX, &mut rec) {
+        return Vec3::new(rec.normal.x() + 1.0,
+            rec.normal.y() + 1.0,
+            rec.normal.z() + 1.0) * 0.5
     }
 
     let dir = ray.direction().into_unit();
@@ -34,6 +28,11 @@ fn color(ray: &Ray) -> Vec3 {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+
+    let mut world = HitList::new();
+    world.append(Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5)));
+    world.append(Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0)));
+
     let width = 200;
     let height = 100;
 
@@ -51,7 +50,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let u = i as f32 / width as f32;
             let v = j as f32 / height as f32;
             let ray = Ray::new(origin, lower_left + horizontal * u + vertical * v);
-            let col = color(&ray);
+            let col = color(&ray, &world);
             write!(&mut out, "{} {} {}\n",
                 (col.x() * 255.9) as u8,
                 (col.y() * 255.9) as u8,
