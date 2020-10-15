@@ -57,13 +57,15 @@ impl Material for Lambert {
 
 #[derive(Clone)]
 pub struct Metal {
-    albedo: Vec3
+    albedo: Vec3,
+    fuzz: f32
 }
 
 impl Metal {
-    pub fn new(albedo: Vec3) -> Self {
+    pub fn new(albedo: Vec3, fuzz: f32) -> Self {
         Metal {
-            albedo
+            albedo,
+            fuzz: if fuzz > 1.0 { 1.0 } else { fuzz }
         }
     }
 }
@@ -77,7 +79,7 @@ impl Material for Metal {
         scatter: &mut Ray) -> bool {
 
         let reflected = reflect(&ray.direction().into_unit(), &rec.normal);
-        *scatter = Ray::new(rec.p, reflected);
+        *scatter = Ray::new(rec.p, reflected + rnd_in_sphere() * self.fuzz);
         *atten = self.albedo;
         scatter.direction().dot(&rec.normal) > 0.0
     }
