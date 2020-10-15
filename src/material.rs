@@ -85,6 +85,49 @@ impl Material for Metal {
     }
 }
 
+#[derive(Clone)]
+pub struct Dielectric {
+    index: f32
+}
+
+impl Dielectric {
+    pub fn new(index: f32) -> Self {
+        Dielectric {
+            index
+        }
+    }
+}
+
+impl Material for Dielectric {
+
+    fn scatter(&self,
+        ray: &Ray,
+        rec: &HitRecord,
+        atten: &mut Vec3,
+        scatter: &mut Ray) -> bool {
+        let out_normal;
+        let reflected = reflect(&ray.direction(), &rec.normal);
+        let ni_nt;
+        *atten = Vec3::new_all(1.0);
+
+        if ray.direction().dot(&rec.normal) > 0.0 {
+            out_normal = rec.normal * -1.0;
+            ni_nt = self.index;
+        } else {
+            out_normal = rec.normal;
+            ni_nt = 1.0 / self.index;
+        }
+
+        if let Some(refracted) = refract(&ray.direction(), &out_normal, ni_nt) {
+            *scatter = Ray::new(rec.p, refracted);
+            true
+        } else {
+            *scatter = Ray::new(rec.p, reflected);
+            false
+        }
+    }
+}
+
 // TODO: implement and benchmark a different point picking algo
 fn rnd_in_sphere() -> Vec3 {
     let mut rng = rand::thread_rng();
@@ -103,4 +146,15 @@ fn rnd_in_sphere() -> Vec3 {
 
 fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
     *v - *n * v.dot(n) * 2.0
+}
+
+fn refract(v: &Vec3, n: &Vec3, ni_nt: f32) -> Option<Vec3> {
+    let unit = v.into_unit();
+    let dot = unit.dot(v);
+    let d = 1.0 - ni_nt * ni_nt * (1.0 - dot * dot);
+    if d > 0.0 {
+        Some((unit - *n * dot) * ni_nt - *n * d.sqrt())
+    } else {
+        None
+    }
 }

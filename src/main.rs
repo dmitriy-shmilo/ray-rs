@@ -12,7 +12,7 @@ use ray::Ray;
 use hit::{ Hit, HitList, HitRecord };
 use sphere::Sphere;
 use camera::Camera;
-use material::{ Lambert, Metal };
+use material::{ Lambert, Metal, Dielectric };
 use std::fs::File;
 use std::io::{ BufWriter, Write };
 use rand::Rng;
@@ -40,8 +40,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut world = HitList::new();
     world.append(Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0),
             0.5,
-            Box::new(Metal::new(Vec3::new(0.4, 0.1, 0.7), 0.1)))));
-    world.append(Box::new(Sphere::new(Vec3::new(1.0, 0.0, -1.0),
+            Box::new(Dielectric::new(1.5)))));
+    world.append(Box::new(Sphere::new(Vec3::new(0.5, 0.0, -1.0),
             0.3,
             Box::new(Metal::new(Vec3::new(0.4, 0.9, 0.7), 0.6)))));
     world.append(Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0),
