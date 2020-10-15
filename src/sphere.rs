@@ -1,17 +1,20 @@
 use crate::hit::{ Hit, HitRecord};
 use crate::vec3::Vec3;
 use crate::ray::Ray;
+use crate::material::Material;
 
 pub struct Sphere {
     center: Vec3,
-    radius: f32
+    radius: f32,
+    material: Box<dyn Material>
 }
 
 impl Sphere {
-    pub fn new(center: Vec3, radius: f32) -> Self {
+    pub fn new(center: Vec3, radius: f32, material: Box<dyn Material>) -> Self {
         Sphere {
             center,
-            radius
+            radius,
+            material: material
         }
     }
 }
@@ -31,6 +34,7 @@ impl Hit for Sphere {
                 rec.t = t;
                 rec.p = ray.point_at(rec.t);
                 rec.normal = (rec.p - self.center) / self.radius;
+                rec.material = self.material.clone();
                 return true;
             }
 
@@ -39,6 +43,7 @@ impl Hit for Sphere {
                 rec.t = t;
                 rec.p = ray.point_at(rec.t);
                 rec.normal = (rec.p - self.center) / self.radius;
+                rec.material = self.material.clone();
                 return true;
             }
         }

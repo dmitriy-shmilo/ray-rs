@@ -1,5 +1,6 @@
 use crate::vec3::Vec3;
 use crate::ray::Ray;
+use crate::material::{ Material, Lambert };
 use std::vec::Vec;
 
 pub trait Hit {
@@ -9,7 +10,8 @@ pub trait Hit {
 pub struct HitRecord {
     pub t: f32,
     pub p: Vec3,
-    pub normal: Vec3
+    pub normal: Vec3,
+    pub material: Box<dyn Material>
 }
 
 impl HitRecord {
@@ -17,7 +19,8 @@ impl HitRecord {
         HitRecord {
             t: 0.0,
             p: Vec3::new_zero(),
-            normal: Vec3::new_zero()
+            normal: Vec3::new_zero(),
+            material: Box::new(Lambert::new(Vec3::new_zero()))
         }
     }
 }
@@ -52,9 +55,7 @@ impl Hit for HitList {
         }
 
         if any_hit {
-            rec.t = temp.t;
-            rec.p = temp.p;
-            rec.normal = temp.normal;
+            *rec = temp;
         }
 
         any_hit

@@ -5,37 +5,29 @@ mod ray;
 mod hit;
 mod sphere;
 mod camera;
+mod material;
 
 use vec3::Vec3;
 use ray::Ray;
 use hit::{ Hit, HitList, HitRecord };
 use sphere::Sphere;
 use camera::Camera;
+use material::{ Lambert, Metal };
 use std::fs::File;
 use std::io::{ BufWriter, Write };
 use rand::Rng;
 
-// TODO: implement and benchmark a different point picking algo
-fn rnd_in_sphere() -> Vec3 {
-    let mut rng = rand::thread_rng();
-    let mut result;
-    let offset = Vec3::new_all(1.0);
-
-    loop {
-        result = Vec3::new(rng.gen(), rng.gen(), rng.gen()) * 2.0 - offset;
-        if result.len_sq() < 1.0 {
-            break;
-        }
-    }
-
-    result
-}
-
-fn color(ray: &Ray, world:&HitList) -> Vec3 {
+fn color(ray: &Ray, world:&HitList, depth: u8) -> Vec3 {
     let mut rec = HitRecord::new();
     if world.hit(&ray, 0.001, f32::MAX, &mut rec) {
-        let target = rec.p + rec.normal + rnd_in_sphere();
-        return color(&Ray::new(rec.p, target - rec.p), &world) * 0.5;
+        let mut scatter = Ray::new(Vec3::new_zero(), Vec3::new_zero());
+        let mut atten = Vec3::new_zero();
+
+        if depth < 50 && rec.material.scatter(ray, &rec, &mut atten, &mut scatter) {
+            return atten * color(&scatter, world, depth + 1);
+        }
+
+        return Vec3::new_zero();
     }
 
     let dir = ray.direction().into_unit();
@@ -46,8 +38,12 @@ fn color(ray: &Ray, world:&HitList) -> Vec3 {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut world = HitList::new();
-    world.append(Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5)));
-    world.append(Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0)));
+    world.append(Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0),
+            0.5,
+            Box::new(Metal::new(Vec3::new(0.4, 0.1, 0.7))))));
+    world.append(Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0),
+            100.0,
+            Box::new(Lambert::new(Vec3::new(0.1, 0.1, 0.1))))));
 
     let width = 200;
     let height = 100;
@@ -69,7 +65,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let ray = camera.get_ray(u, v);
 
                 // TODO: implement AddAssign for Vec3
-                col = col + color(&ray, &world);
+                col = col + color(&ray, &world, 0);
             }
             // TODO: implement DivAssign for Vec3
             col = col / aa_rays as f32;
