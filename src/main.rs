@@ -16,6 +16,7 @@ use material::{ Lambert, Metal, Dielectric };
 use std::fs::File;
 use std::io::{ BufWriter, Write };
 use std::f32::consts::PI;
+use std::time::Instant;
 use rand::Rng;
 
 fn color(ray: &Ray, world:&HitList, depth: u8) -> Vec3 {
@@ -38,6 +39,7 @@ fn color(ray: &Ray, world:&HitList, depth: u8) -> Vec3 {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
 
+    let now = Instant::now();
     let mut world = HitList::new();
     let r = (PI / 4.0).cos();
 
@@ -49,14 +51,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             r,
             Box::new(Lambert::new(Vec3::new(0.7, 0.1, 0.1))))));
 
-    let width = 200;
-    let height = 100;
+    let width = 600;
+    let height = 400;
     let aa_rays = 50;
-    let camera = Camera::new(Vec3::new(-2.0, 2.0, 1.0),
-        Vec3::new(0.0, 0.0, -1.0),
+
+    let origin = Vec3::new(3.0, 3.0, 2.0);
+    let dest = Vec3::new(0.0, 0.0, -1.0);
+    let camera = Camera::new(origin,
+        dest,
         Vec3::new(0.0, 1.0, 0.0),
-        90.0,
-        width as f32 / height as f32);
+        20.0,
+        width as f32 / height as f32,
+        2.0,
+        (origin - dest).len());
 
     let mut rng = rand::thread_rng();
 
@@ -89,5 +96,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
+    println!("Done in {:?}", now.elapsed());
     Ok(())
 }
