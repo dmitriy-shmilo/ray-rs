@@ -15,6 +15,7 @@ use camera::Camera;
 use material::{ Lambert, Metal, Dielectric };
 use std::fs::File;
 use std::io::{ BufWriter, Write };
+use std::f32::consts::PI;
 use rand::Rng;
 
 fn color(ray: &Ray, world:&HitList, depth: u8) -> Vec3 {
@@ -38,23 +39,20 @@ fn color(ray: &Ray, world:&HitList, depth: u8) -> Vec3 {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut world = HitList::new();
-    world.append(Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0),
-            0.5,
-            Box::new(Dielectric::new(1.5)))));
-    world.append(Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0),
-            -0.45,
-            Box::new(Dielectric::new(1.5)))));
-    world.append(Box::new(Sphere::new(Vec3::new(0.5, 0.0, -1.0),
-            0.3,
-            Box::new(Metal::new(Vec3::new(0.4, 0.9, 0.7), 0.6)))));
-    world.append(Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0),
-            100.0,
-            Box::new(Lambert::new(Vec3::new(0.1, 0.1, 0.1))))));
+    let r = (PI / 4.0).cos();
+
+    world.append(Box::new(Sphere::new(Vec3::new(-r, 0.0, -1.0),
+            r,
+            Box::new(Lambert::new(Vec3::new(0.1, 0.1, 0.7))))));
+
+    world.append(Box::new(Sphere::new(Vec3::new(r, 0.0, -1.0),
+            r,
+            Box::new(Lambert::new(Vec3::new(0.7, 0.1, 0.1))))));
 
     let width = 200;
     let height = 100;
     let aa_rays = 50;
-    let camera = Camera::new();
+    let camera = Camera::new(90.0, width as f32 / height as f32);
 
     let mut rng = rand::thread_rng();
 
