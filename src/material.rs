@@ -106,25 +106,32 @@ impl Material for Dielectric {
         atten: &mut Vec3,
         scatter: &mut Ray) -> bool {
         let out_normal;
-        let reflected = reflect(&ray.direction(), &rec.normal);
         let ni_nt;
+        let cos;
+        let reflected = reflect(&ray.direction(), &rec.normal);
+        let mut rng = rand::thread_rng();
+
         *atten = Vec3::new_all(1.0);
 
         if ray.direction().dot(&rec.normal) > 0.0 {
             out_normal = rec.normal * -1.0;
             ni_nt = self.index;
+            cos = self.index * ray.direction().dot(&rec.normal) / ray.direction().len();
         } else {
             out_normal = rec.normal;
             ni_nt = 1.0 / self.index;
+            cos = -ray.direction().dot(&rec.normal) / ray.direction().len();
         }
 
         if let Some(refracted) = refract(&ray.direction(), &out_normal, ni_nt) {
-            *scatter = Ray::new(rec.p, refracted);
-            true
-        } else {
-            *scatter = Ray::new(rec.p, reflected);
-            false
+            if rng.gen::<f32>() > schlick(cos, self.index) {
+                *scatter = Ray::new(rec.p, refracted);
+                return true;
+            }
         }
+
+        *scatter = Ray::new(rec.p, reflected);
+        true
     }
 }
 
@@ -157,4 +164,12 @@ fn refract(v: &Vec3, n: &Vec3, ni_nt: f32) -> Option<Vec3> {
     } else {
         None
     }
+}
+
+fn schlick(cos: f32, index: f32) -> f32 {
+    let r0 = (1.0 - index) / (1.0 + index);
+    let r0 = r0 * r0;
+    let t = 1.0 - cos;
+    let t = t * t * t * t * t;
+    r0 + (1.0 - r0) * t
 }

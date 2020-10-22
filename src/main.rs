@@ -41,6 +41,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     world.append(Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0),
             0.5,
             Box::new(Dielectric::new(1.5)))));
+    world.append(Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0),
+            -0.45,
+            Box::new(Dielectric::new(1.5)))));
     world.append(Box::new(Sphere::new(Vec3::new(0.5, 0.0, -1.0),
             0.3,
             Box::new(Metal::new(Vec3::new(0.4, 0.9, 0.7), 0.6)))));
