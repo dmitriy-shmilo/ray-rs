@@ -52,7 +52,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let width = 200;
     let height = 100;
     let aa_rays = 50;
-    let camera = Camera::new(90.0, width as f32 / height as f32);
+    let camera = Camera::new(Vec3::new(-2.0, 2.0, 1.0),
+        Vec3::new(0.0, 0.0, -1.0),
+        Vec3::new(0.0, 1.0, 0.0),
+        90.0,
+        width as f32 / height as f32);
 
     let mut rng = rand::thread_rng();
 
